@@ -15,6 +15,7 @@ body {
 
 .buttons-container {
   display: flex;
+  overflow: auto;
 }
 
 .buttons-container button {

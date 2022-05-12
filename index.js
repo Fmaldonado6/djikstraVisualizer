@@ -6,8 +6,8 @@ const setTargetButton = document.getElementById("setTarget");
 const setMoreTime = document.getElementById("setMoreTime");
 const deleteButton = document.getElementById("deleteButton");
 const restart = document.getElementById("restart");
-const gridWidth = 35;
-const gridHeight = 25;
+let gridWidth = Math.floor(grid.offsetWidth / 30);
+let gridHeight = Math.floor(grid.offsetHeight / 30);
 const graph = new Graph(gridWidth, gridHeight);
 
 class Modes {
@@ -73,24 +73,28 @@ async function start() {
   for (let node of shortestPath) {
     if (node.id == initalNode.id || node.id == finalNode.id) continue;
     const cell = document.getElementById(node.id);
-    cell.classList.add("shortest")
+    cell.classList.add("shortest");
     await delay(10);
   }
 }
 
 function renderGrid() {
+  grid.innerHTML = "";
   let nodeId = 0;
   for (let i = 0; i < gridHeight; i++) {
     const col = document.createElement("div");
     col.className = "grid-col";
     for (let j = 0; j < gridWidth; j++) {
       const row = document.createElement("div");
-      row.className = "grid-row";
+      row.classList.add("grid-row");
       row.id = nodeId;
+      row.x = j;
+      row.y = i;
       row.addEventListener("mousemove", (e) => {
         e.preventDefault();
         if (drag) onCellClick(row, j, i);
       });
+
       row.addEventListener("mousedown", (e) => {
         e.preventDefault();
         drag = true;
@@ -106,10 +110,6 @@ function renderGrid() {
     }
     grid.appendChild(col);
   }
-
-  document.addEventListener("mouseup", () => {
-    drag = false;
-  });
 }
 
 function onCellClick(row, x, y) {
@@ -148,6 +148,11 @@ function resetNode(node) {
 function deleteMapElement(node) {
   if (node == initalNode) initalNode = null;
   if (node == finalNode) finalNode = null;
+}
+
+function calculateGridSize() {
+  gridWidth = Math.floor(grid.offsetWidth / 30);
+  gridHeight = Math.floor(grid.offsetHeight / 30);
 }
 
 function restartMatrix() {
@@ -196,5 +201,21 @@ function delay(ms) {
     setTimeout(resolve, ms);
   });
 }
+
+document.addEventListener("mouseup", () => {
+  drag = false;
+});
+
+window.addEventListener("resize", () => {
+  calculateGridSize();
+  renderGrid();
+});
+
+document.addEventListener("touchmove", (e) => {
+  const { clientX, clientY } = e.changedTouches[0];
+  const cell = document.elementFromPoint(clientX, clientY);
+  if (cell.x != undefined && cell.y != undefined)
+    onCellClick(cell, cell.x, cell.y);
+});
 
 renderGrid();
