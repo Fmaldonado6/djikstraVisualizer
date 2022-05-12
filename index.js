@@ -70,7 +70,7 @@ restart.onclick = () => {
 
 async function start() {
   const result = djikstra(graph, initalNode, finalNode);
-  const shortestPath = getShortestPath(result.pop());
+  const shortestPath = getShortestPath(result?.pop());
 
   await delay(10);
 
