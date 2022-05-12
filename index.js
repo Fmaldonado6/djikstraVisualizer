@@ -206,10 +206,7 @@ document.addEventListener("mouseup", () => {
   drag = false;
 });
 
-window.addEventListener("resize", () => {
-  calculateGridSize();
-  renderGrid();
-});
+
 
 document.addEventListener("touchmove", (e) => {
   const { clientX, clientY } = e.changedTouches[0];
