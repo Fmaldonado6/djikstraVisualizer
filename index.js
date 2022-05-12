@@ -4,6 +4,7 @@ const setWallButton = document.getElementById("setWall");
 const setInitialButton = document.getElementById("setInitial");
 const setTargetButton = document.getElementById("setTarget");
 const setMoreTime = document.getElementById("setMoreTime");
+const deleteButton = document.getElementById("deleteButton");
 const restart = document.getElementById("restart");
 const gridWidth = 35;
 const gridHeight = 25;
@@ -14,8 +15,9 @@ class Modes {
   static setTarget = 1;
   static setWall = 2;
   static setMoreTime = 3;
+  static delete = 4;
 
-  static classNames = ["initial", "target", "wall", "moreTime"];
+  static classNames = ["initial", "target", "wall", "moreTime", ""];
 }
 
 let mode = Modes.setInitial;
@@ -28,71 +30,52 @@ startButton.onclick = () => {
 };
 
 setInitialButton.onclick = () => {
-  selectMode(Modes.setInitial,setInitialButton)
+  selectMode(Modes.setInitial, setInitialButton);
 };
 
 setTargetButton.onclick = () => {
-  selectMode(Modes.setTarget,setTargetButton)
+  selectMode(Modes.setTarget, setTargetButton);
 };
 
 setWallButton.onclick = () => {
-  selectMode(Modes.setWall,setWallButton)
+  selectMode(Modes.setWall, setWallButton);
 };
 
 setMoreTime.onclick = () => {
-  selectMode(Modes.setMoreTime,setMoreTime)
+  selectMode(Modes.setMoreTime, setMoreTime);
 };
 
-function selectMode(newMode,button){
-  document.querySelector(`.lighten-3`)?.classList.replace("lighten-3","lighten-1");
-  mode = newMode;
-  button.classList.remove("lighten-1")
-  button.classList.add("lighten-3")
-}
+deleteButton.onclick = () => {
+  selectMode(Modes.delete, deleteButton);
+};
 
 restart.onclick = () => {
   restartMatrix();
-  document.querySelector(`.initial`)?.classList.remove("initial");
-  document.querySelector(`.target`)?.classList.remove("target");
-  document
-    .querySelectorAll(".visited")
-    ?.forEach((e) => e.classList.remove("visited"));
-  document
-    .querySelectorAll(".shortest")
-    ?.forEach((e) => e.classList.remove("shortest"));
-  document
-    .querySelectorAll(".wall")
-    ?.forEach((e) => e.classList.remove("wall"));
-  document
-    .querySelectorAll(".moreTime")
-    ?.forEach((e) => e.classList.remove("moreTime"));
+  removeInitial();
+  removePath();
+  removeMapElements();
 };
 
 async function start() {
+  removePath();
   const result = djikstra(graph, initalNode, finalNode);
   const shortestPath = getShortestPath(result?.pop());
 
   await delay(10);
 
   for (let node of result) {
-    if (node == initalNode) continue;
+    if (node.id == initalNode.id) continue;
     const cell = document.getElementById(node.id);
-    cell.className = "grid-row visited";
+    cell.classList.add("visited");
     await delay(10);
   }
 
   for (let node of shortestPath) {
-    if (node == initalNode || node == finalNode) continue;
+    if (node.id == initalNode.id || node.id == finalNode.id) continue;
     const cell = document.getElementById(node.id);
-    cell.className = "grid-row shortest";
+    cell.classList.add("shortest")
     await delay(10);
   }
-}
-
-function delay(ms) {
-  return new Promise((resolve, reject) => {
-    setTimeout(resolve, ms);
-  });
 }
 
 function renderGrid() {
@@ -105,16 +88,16 @@ function renderGrid() {
       row.className = "grid-row";
       row.id = nodeId;
       row.addEventListener("mousemove", (e) => {
-        e.preventDefault()
+        e.preventDefault();
         if (drag) onCellClick(row, j, i);
       });
       row.addEventListener("mousedown", (e) => {
-        e.preventDefault()
+        e.preventDefault();
         drag = true;
       });
 
       row.addEventListener("click", (e) => {
-        e.preventDefault()
+        e.preventDefault();
         onCellClick(row, j, i);
       });
 
@@ -129,18 +112,10 @@ function renderGrid() {
   });
 }
 
-function restartMatrix() {
-  let nodeId = 0;
-  for (let i = 0; i < gridHeight; i++) {
-    for (let j = 0; j < gridWidth; j++) {
-      graph.addNode(new Node(nodeId++, j, i));
-    }
-  }
-}
-
 function onCellClick(row, x, y) {
   const className = Modes.classNames[mode];
   const currentNode = graph.getNode(x, y);
+  resetNode(currentNode);
 
   switch (mode) {
     case Modes.setInitial:
@@ -157,9 +132,69 @@ function onCellClick(row, x, y) {
     case Modes.setMoreTime:
       currentNode.extraTime = 10;
       break;
+    case Modes.delete:
+      deleteMapElement(currentNode);
+      break;
   }
 
   row.className = "grid-row " + className;
+}
+
+function resetNode(node) {
+  node.extraTime = 0;
+  node.isWall = false;
+}
+
+function deleteMapElement(node) {
+  if (node == initalNode) initalNode = null;
+  if (node == finalNode) finalNode = null;
+}
+
+function restartMatrix() {
+  let nodeId = 0;
+  for (let i = 0; i < gridHeight; i++) {
+    for (let j = 0; j < gridWidth; j++) {
+      graph.addNode(new Node(nodeId++, j, i));
+    }
+  }
+}
+
+function removeInitial() {
+  document.querySelector(`.initial`)?.classList.remove("initial");
+  document.querySelector(`.target`)?.classList.remove("target");
+}
+
+function removePath() {
+  document
+    .querySelectorAll(".visited")
+    ?.forEach((e) => e.classList.remove("visited"));
+  document
+    .querySelectorAll(".shortest")
+    ?.forEach((e) => e.classList.remove("shortest"));
+}
+
+function removeMapElements() {
+  document
+    .querySelectorAll(".wall")
+    ?.forEach((e) => e.classList.remove("wall"));
+  document
+    .querySelectorAll(".moreTime")
+    ?.forEach((e) => e.classList.remove("moreTime"));
+}
+
+function selectMode(newMode, button) {
+  document
+    .querySelector(`.lighten-3`)
+    ?.classList.replace("lighten-3", "lighten-1");
+  mode = newMode;
+  button.classList.remove("lighten-1");
+  button.classList.add("lighten-3");
+}
+
+function delay(ms) {
+  return new Promise((resolve, reject) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 renderGrid();
